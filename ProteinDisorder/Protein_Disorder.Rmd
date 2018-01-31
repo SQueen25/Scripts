@@ -1,0 +1,207 @@
+---
+title: ''
+date: "December 8, 2017"
+output: 
+  html_document: default
+  word_document: default
+---
+<link rel="stylesheet" href="src/w3.css">
+<!--<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">-->
+<!--Sidebar-->
+<div class="w3-sidebar w3-light-grey w3-bar-block" style="width:175px;height:100%;">
+<h2 class="w3-bar-item" style="color:#1c892d">Contents</h2>
+<a href="#overview" class="w3-bar-item w3-button">Summary</a>
+<a href="#setup" class="w3-bar-item w3-button">Data processing</a>
+<a href="#initial analysis" class="w3-bar-item w3-button">Initial Analysis</a>
+<a href="#further analysis" class="w3-bar-item w3-button">Further Analysis</a>
+<a href="#DP00534" class="w3-bar-item w3-button">DP00534</a>
+<a href="#DP01057" class="w3-bar-item w3-button">DP01057</a>
+<a href="#DP01058" class="w3-bar-item w3-button">DP01058</a>
+<a href="#DP00916" class="w3-bar-item w3-button">DP00916</a>
+<a href="#DP00469" class="w3-bar-item w3-button">DP00469</a>
+<a href="#conclusion" class="w3-bar-item w3-button">Conclusions</a>
+
+
+</div>
+<!-- Page Content -->
+<div style="height:100%;margin-left:20%;">
+# Evaluation of DISOPRED3 for protein disorder prediction
+<br>
+
+Authors: 
+<br> Shawn Queen, shawn.queen25@uga.edu  
+<br> Liangjiao Xue, liangjiao.xue@gmail.com
+<br> Jake Reeves, jake.reeves2013@gmail.com
+<br>
+Copy Right: 
+<br>Tsai Lab UGA, cjtsai@uga.edu
+<br>Liangjiao Xue,  liangjiao.xue@gmail.com  
+
+<div id="overview">
+## Summary
+</div>
+The purpose of this code is to graphically represent the accuracy and sensitivity of the protein disorder prediction software DISOPRED 3 relative to a curated data set retrieved from DisProt.
+
+
+*Inputs:*<br>
+1) Raw .diso file format output from DISOPRED3, placed in a folder named "disopred"<br>
+2) Manually created vertical matrix of binary data where 1 = disordered and 0 = ordered, placed in a folder named "disprot"
+  
+*Outputs:*<br>
+1) An R dataframe containing protein sequence and disorder information<br>
+2) A graph that plots the continuous variable of DISOPRED3's predicted disorder versus the binary discrete variable of DisProt's observed disorder
+  
+*Note:*
+  *The initial analysis section is not necessary for further use of the program and can be removed if necessary.*
+<div id="setup">
+
+***
+
+## Data processing
+</div>
+To do this, protein entries from _Arabidopsis thaliana_ were retrieved from DisProt, a manually-curated database of experimental protein disorder data, and the amino acid sequences used as input for DISOPRED3. The output from DISOPRED3 is used as input for the graph, as well as manually-created files from DisProt entry data. 
+  
+Five proteins from the initial group of 20 are graphed in this analysis due to their genic features (primarily short length, high disorder) to further evaluate the accuracy of DISOPRED3's predictions on short, disordered genes that lack homologs, an apparent area of weakness for DISOPRED3. *Proteins DP01057 and DP01058 are COR15a and COR15b, respectively.* Data were graphed using the package ggplot2.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width = 1080)
+library("ggplot2")
+```
+
+```{r SetDirectory}
+# Set working directory
+setwd("../ProteinDisorder/data/")
+
+# Read in files for each protein
+# DP00534
+tmp <- read.table(file = "disopred/DP00534.diso")
+tmp2 <- read.table(file = "disprot/DP00534.txt")
+DP00534 <- cbind(tmp, tmp2)
+names(DP00534) <- c("Number","AA","Dis_Bin","Dis_Score","Exp_Bin")
+
+# DP01057
+tmp <- read.table(file = "disopred/DP01057.diso")
+tmp2 <- read.table(file = "disprot/DP01057.txt")
+DP01057 <- cbind(tmp, tmp2)
+names(DP01057) <- c("Number","AA","Dis_Bin","Dis_Score","Exp_Bin")
+
+
+# DP01058
+tmp <- read.table(file = "disopred/DP01058.diso")
+tmp2 <- read.table(file = "disprot/DP01058.txt")
+DP01058 <- cbind(tmp, tmp2)
+names(DP01058) <- c("Number","AA","Dis_Bin","Dis_Score","Exp_Bin")
+
+# DP00916
+tmp <- read.table(file = "disopred/DP00916.diso")
+tmp2 <- read.table(file = "disprot/DP00916.txt")
+DP00916 <- cbind(tmp, tmp2)
+names(DP00916) <- c("Number","AA","Dis_Bin","Dis_Score","Exp_Bin")
+
+# DP00469
+tmp <- read.table(file = "disopred/DP00469.diso")
+tmp2 <- read.table(file = "disprot/DP00469.txt")
+DP00469 <- cbind(tmp, tmp2)
+names(DP00469) <- c("Number","AA","Dis_Bin","Dis_Score","Exp_Bin")
+rm(tmp)
+rm(tmp2)
+```
+
+***
+
+<div id="initial analysis">
+## Initial analysis
+</div>
+Interestingly, five proteins were predicted by DISOPRED to have 100% disorder, with no folding activity. *Checking these five proteins against the curated data in DisProt reveals that DISOPRED correctly predicted their disorder with perfect accuracy.* There was no clear correlation between length and disorder in this data set. This could be because of the relatively small size of the data set, or because of the fact that DisProt is a manually-curated database of proteins that were studied because of their unique disorder.
+
+*DISOPRED performed strongly with less than 13% error on all but three proteins.* Interestingly, each of the three proteins that DISOPRED performed the worst on were all highly disordered, despite having disparate lengths. Entries DP01057 and DP01058, also known as COR15a and COR15b, were predicted with adequate accuracy. Overall, DISOPRED3 appears to have performed well.
+
+```{r DisorderTable}
+disordertable <- read.csv("data/disorder_table.csv", header = TRUE)
+names(disordertable) <- c("Entry","Length","Residues(DISOPRED)","Residues(DisProt)","Percent(DISOPRED)","Percent(DisProt)","Error")
+disordertable
+```
+_Table 1, DISOPRED results for each DisProt entry. DISOPRED error was found by subjecting the percentage disorder predicted by DISOPRED from the percentage disorder found in DisProt._
+
+***
+
+<div id="further analysis">
+## Further Analysis
+</div>
+DISOPRED3's output data is a space-delimited table with a header (that is automatically excluded by R's read.table function). Column 1 is the residue number, column 2 is the amino acid abbreviation for that residue, column 3 is a binary indicator of a residue's disorder, and column 4 is the disorder score for that residue. This data can be read as binary (column 3) or "continuous" data (column 4), and for this project we are reading it as "continuous."
+The data is plotted as a simple line plot with residue on the x axis, disorder level on the y axis, and amino acid abbreviation labeling the x axis (*work-in-progress*). A single red line denotes the cutoff between what is considered an ordered or disordered residue. *Work in progress: Additional data from Disprot database will be overlaid onto the graph to indicate regions that were experimentally validated as disordered or ordered. Currently this data is being manually added in R rather than integrated with a script or program.*
+
+Shown below is the graph for protein DP00534 (UniProt entry here)[http://www.uniprot.org/uniprot/Q9LZP9], which DISOPRED3 scored the worst on in terms of accuracy out of the DisProt group. *DisProt lists this protein as entirely disordered, yet DISOPRED only calculated roughly 50% disorder.* BLASTP search reveals that DP00534 appears to be well-conserved across the plant kingdom despite its short length. This is not surprising, given that it is "Calvin cycle protein CP12-2, chloroplastic".
+
+***
+
+<div id="DP00534">
+## DP00534
+</div>
+```{r GraphDisorder, out.width='200%'}
+ggplot() + geom_line(aes(x=factor(DP00534$Number), y=DP00534$Exp_Bin)) +
+           geom_area(aes(x=DP00534$Number, y=DP00534$Exp_Bin), fill="grey", alpha=0.5) +
+           geom_line(aes(x=DP00534$Number, y=DP00534$Dis_Score)) +
+           geom_hline(yintercept=.5, color="red") + 
+           labs(x="Residue",y="Disorder level", title = "DISOPRED3 prediction accuracy for protein DP00534", caption="Per-residue disorder level (y axis) as predicted by DISOPRED3 graphed along the length of the protein (x axis). \nDisordered regions with experimental evidence (DisProt) are shaded in grey. \nRed line indicates DISOPRED3's cutoff level, all residues above this line are disordered. \nAmino acid code for each residue labels the x-axis") + scale_x_discrete(labels=DP00534$AA)
+```
+
+***
+
+<div id="DP01057">
+## DP01057
+</div>
+```{r GraphDisorder2}
+ggplot() + geom_line(aes(x=factor(DP01057$Number), y=DP01057$Exp_Bin)) +
+           geom_col(aes(x=DP01057$Number, y=DP01057$Exp_Bin), fill="grey", alpha=0.5) +
+           geom_line(aes(x=DP01057$Number, y=DP01057$Dis_Score)) +
+           geom_hline(yintercept=.5, color="red") + 
+           labs(x="Residue",y="Disorder level", title = "DISOPRED3 prediction accuracy for protein DP01057", caption="Per-residue disorder level (y axis) as predicted by DISOPRED3 graphed along the length of the protein (x axis). \nDisordered regions with experimental evidence (DisProt) are shaded in grey. \nRed line indicates DISOPRED3's cutoff level, all residues above this line are disordered. \nAmino acid code for each residue labels the x-axis") + scale_x_discrete(labels=DP01057$AA)
+```
+
+***
+
+<div id="DP01058">
+## DP01058
+</div>
+```{r GraphDisorder3}
+ggplot() + geom_line(aes(x=factor(DP01058$Number), y=DP01058$Exp_Bin)) +
+           geom_col(aes(x=DP01058$Number, y=DP01058$Exp_Bin), fill="grey", alpha=0.5) +
+           geom_line(aes(x=DP01058$Number, y=DP01058$Dis_Score)) +
+           geom_hline(yintercept=.5, color="red") + 
+           labs(x="Residue",y="Disorder level", title = "DISOPRED3 prediction accuracy for protein DP01058", caption="Per-residue disorder level (y axis) as predicted by DISOPRED3 graphed along the length of the protein (x axis). \nDisordered regions with experimental evidence (DisProt) are shaded in grey. \nRed line indicates DISOPRED3's cutoff level, all residues above this line are disordered. \nAmino acid code for each residue labels the x-axis") + scale_x_discrete(labels=DP01058$AA)
+```
+
+***
+
+<div id="DP00916">
+## DP00916
+</div>
+```{r GraphDisorder4}
+ggplot() + geom_line(aes(x=factor(DP00916$Number), y=DP00916$Exp_Bin)) +
+           geom_col(aes(x=DP00916$Number, y=DP00916$Exp_Bin), fill="grey", alpha=0.5) +
+           geom_line(aes(x=DP00916$Number, y=DP00916$Dis_Score)) +
+           geom_hline(yintercept=.5, color="red") + 
+           labs(x="Residue",y="Disorder level", title = "DISOPRED3 prediction accuracy for protein DP00916", caption="Per-residue disorder level (y axis) as predicted by DISOPRED3 graphed along the length of the protein (x axis). \nDisordered regions with experimental evidence (DisProt) are shaded in grey. \nRed line indicates DISOPRED3's cutoff level, all residues above this line are disordered. \nAmino acid code for each residue labels the x-axis") + scale_x_discrete(labels=DP00916$AA)
+```
+
+<div id="DP00469">
+## DP00469
+</div>
+```{r GraphDisorder5}
+ggplot() + geom_line(aes(x=factor(DP00469$Number), y=DP00469$Exp_Bin)) +
+           geom_col(aes(x=DP00469$Number, y=DP00469$Exp_Bin), fill="grey", alpha=0.5) +
+           geom_line(aes(x=DP00469$Number, y=DP00469$Dis_Score)) +
+           geom_hline(yintercept=.5, color="red") + 
+           labs(x="Residue",y="Disorder level", title = "DISOPRED3 prediction accuracy for protein DP00469", caption="Per-residue disorder level (y axis) as predicted by DISOPRED3 graphed along the length of the protein (x axis). \nDisordered regions with experimental evidence (DisProt) are shaded in grey. \nRed line indicates DISOPRED3's cutoff level, all residues above this line are disordered. \nAmino acid code for each residue labels the x-axis") + scale_x_discrete(labels=DP00469$AA)
+```
+
+***
+
+<div id="conclusion">
+## Conclusions
+</div>
+DISOPRED3 appears to have scored well as far as predictive power goes, especially for totally disordered proteins, but it may not perform accurately for very short disordered proteins. Despite a lack of homologs being a listed caveat in reviews, it incorrectly predicted the disorder of DP00534 despite its level of conservation, meaning that the protein either is an outlier or that DISOPRED3 has a sharp decrease in predictive power for proteins shorter than approximately 130 amino acids.
+<br>
+<br>
